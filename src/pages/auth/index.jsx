@@ -4,19 +4,105 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiClient } from "@/lib/api-client";
+import { useAppStore } from "@/store";
+import { LOGIN_ROUTES, SIGNUP_ROUTES } from "@/utils/constants";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  const { seUserInfo } = useAppStore();
+
+  const navigate = useNavigate();
+
+  const validateSignup = () => {
+    if (!email.length) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return false;
+    }
+    return true;
+  };
+
+  const validateLogin = () => {
+    if (!email.length) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleLogin = async () => {
-    console.log("Login");
+    try {
+      if (!validateLogin()) {
+        return;
+      }
+      const resp = await apiClient.post(
+        LOGIN_ROUTES,
+        {
+          email,
+          password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (resp.status === 200) {
+        seUserInfo(resp.data.data);
+        if (resp.data.data.profile_setup) {
+          navigate("/chat");
+        } else {
+          navigate("/profile");
+        }
+      }
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
   };
 
   const handleSignup = async () => {
-    console.log("Signup");
+    try {
+      if (!validateSignup()) {
+        return;
+      }
+      const resp = await apiClient.post(
+        SIGNUP_ROUTES,
+        {
+          email,
+          password,
+          confirmPassword,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (resp.status === 201) {
+        seUserInfo(resp.data.data);
+
+        navigate("/profile");
+      }
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
   };
 
   return (
