@@ -16,7 +16,7 @@ function Auth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const { seUserInfo } = useAppStore();
+  const { setUserInfo } = useAppStore();
 
   const navigate = useNavigate();
 
@@ -66,7 +66,8 @@ function Auth() {
       );
 
       if (resp.status === 200) {
-        seUserInfo(resp.data.data);
+        setUserInfo(resp.data.data);
+
         if (resp.data.data.profile_setup) {
           navigate("/chat");
         } else {
@@ -96,7 +97,7 @@ function Auth() {
       );
 
       if (resp.status === 201) {
-        seUserInfo(resp.data.data);
+        setUserInfo(resp.data.data);
 
         navigate("/profile");
       }
