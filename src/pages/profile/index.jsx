@@ -9,6 +9,7 @@ import {
   colors,
   DELETE_PROFILE_IMAGE_ROUTE,
   getColor,
+  HOST,
   UPDATE_PROFILE_ROUTE,
 } from "@/utils/constants";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,6 @@ function Profile() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  // const [imagePreview, setImagePreview] = useState(null);
   const [image, setImage] = useState(null);
   const [hovered, setHovered] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
@@ -72,7 +72,9 @@ function Profile() {
     if (userInfo) {
       setFirstName(userInfo.first_name);
       setLastName(userInfo.last_name);
-      setImage(userInfo.img);
+      setImage(
+        userInfo.img ? `${HOST}/uploads/profiles/${userInfo.img}` : null
+      );
       setSelectedColor(colors.indexOf(userInfo.color));
     }
   }, [userInfo]);
