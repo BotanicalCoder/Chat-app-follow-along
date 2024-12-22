@@ -1,10 +1,16 @@
 import { useAppStore } from "@/store";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import { FaTrash, FaPlus } from "react-icons/fa6";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { colors, getColor, UPDATE_PROFILE_ROUTE } from "@/utils/constants";
+import {
+  ADD_PROFILE_IMAGE_ROUTE,
+  colors,
+  DELETE_PROFILE_IMAGE_ROUTE,
+  getColor,
+  UPDATE_PROFILE_ROUTE,
+} from "@/utils/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,8 +21,11 @@ function Profile() {
 
   const navigate = useNavigate();
 
+  const fileInputRef = useRef(null);
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  // const [imagePreview, setImagePreview] = useState(null);
   const [image, setImage] = useState(null);
   const [hovered, setHovered] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
@@ -59,11 +68,81 @@ function Profile() {
     }
   };
 
+  useEffect(() => {
+    if (userInfo) {
+      setFirstName(userInfo.first_name);
+      setLastName(userInfo.last_name);
+      setImage(userInfo.img);
+      setSelectedColor(colors.indexOf(userInfo.color));
+    }
+  }, [userInfo]);
+
+  const handleNavigate = () => {
+    if (userInfo.profile_setup) {
+      navigate("/chat");
+      return;
+    }
+    toast.error("Please complete your profile setup");
+  };
+
+  const handleFileInputClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleImageChange = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (file) {
+        // add  image preview
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          setImage(reader.result);
+        };
+
+        // send the image to the server
+        const formData = new FormData();
+        formData.append("profile-image", file);
+
+        const resp = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {
+          withCredentials: true,
+        });
+
+        if (resp.status === 200) {
+          toast.success("Profile image updated successfully");
+          setUserInfo(resp.data.data);
+        }
+      }
+    } catch (error) {
+      toast.error(error.response.data.message || "Something went wrong");
+      setImage(null);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    try {
+      const resp = await apiClient.delete(DELETE_PROFILE_IMAGE_ROUTE, {
+        withCredentials: true,
+      });
+
+      if (resp.status === 200) {
+        setImage(null);
+        setUserInfo(resp.data.data);
+        toast.success("Profile image deleted successfully");
+      }
+    } catch (error) {
+      toast.error(error.response.data.message || "Unable to delete image");
+    }
+  };
+
   return (
     <div className="bg-[#1b1c24] h-screen flex items-center justify-center flex-col gap-10">
       <div className="flex flex-col gap-10 w-[80vw] md:w-max">
         <div>
-          <IoArrowBack className="text-white/90 text-4xl lg:text-6xl cursor-pointer" />
+          <IoArrowBack
+            className="text-white/90 text-4xl lg:text-6xl cursor-pointer"
+            onClick={handleNavigate}
+          />
         </div>
 
         <div className="grid grid-cols-2">
@@ -95,12 +174,27 @@ function Profile() {
             {hovered && (
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer">
                 {image ? (
-                  <FaTrash className="text-white text-3xl cursor-pointer" />
+                  <FaTrash
+                    className="text-white text-3xl cursor-pointer"
+                    onClick={handleDeleteImage}
+                  />
                 ) : (
-                  <FaPlus className="text-white text-3xl cursor-pointer" />
+                  <FaPlus
+                    className="text-white text-3xl cursor-pointer"
+                    onClick={handleFileInputClick}
+                  />
                 )}
               </div>
             )}
+
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleImageChange}
+              ref={fileInputRef}
+              name="profile-image"
+              accept=".png .jpg .jpeg .svg .webp"
+            />
           </div>
 
           <div className="flex min-w-32 md:min-w-64 flex-col gap-5 !text-white items-center justify-center">
