@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import { FaTrash, FaPlus } from "react-icons/fa6";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { colors, getColor } from "@/utils/constants";
+import { colors, getColor, UPDATE_PROFILE_ROUTE } from "@/utils/constants";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 
 function Profile() {
   const { userInfo, setUserInfo } = useAppStore();
@@ -19,7 +21,43 @@ function Profile() {
   const [hovered, setHovered] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
 
-  const saveChanges = async () => {};
+  const validateProfile = () => {
+    if (firstName === "" || lastName === "") {
+      toast.error("first name and last name are required");
+      return false;
+    }
+    return true;
+  };
+
+  const saveChanges = async () => {
+    try {
+      if (!validateProfile()) return;
+
+      const resp = await apiClient.post(
+        UPDATE_PROFILE_ROUTE,
+        {
+          first_name: firstName,
+          last_name: lastName,
+          image,
+          color: colors[selectedColor],
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (resp.status === 200) {
+        toast.success("Profile updated successfully");
+        setUserInfo(resp.data.data);
+        navigate("/chat");
+      } else {
+        toast.error(resp.data.message || "Something went wrong");
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error(err.response.data.message || "Something went wrong");
+    }
+  };
 
   return (
     <div className="bg-[#1b1c24] h-screen flex items-center justify-center flex-col gap-10">
