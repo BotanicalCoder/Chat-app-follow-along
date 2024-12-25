@@ -1,3 +1,5 @@
+import animationData from "@/assets/lottie-json.json";
+
 export const HOST = import.meta.env.VITE_SERVER_URL;
 
 export const AUTH_ROUTES = "api/auth";
@@ -7,6 +9,7 @@ export const GET_USER_INFO = `${AUTH_ROUTES}/user-info`;
 export const UPDATE_PROFILE_ROUTE = `${AUTH_ROUTES}/update-profile`;
 export const ADD_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/add-profile-image`;
 export const DELETE_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/delete-profile-image`;
+export const LOGOUT_ROUTE = `${AUTH_ROUTES}/logout`;
 
 export const colors = [
   "bg-[#712c4a57] text-[#ff006e] border-[1px] border-[#ff006faa]",
@@ -18,4 +21,10 @@ export const colors = [
 export const getColor = (color) => {
   if (color >= 0 && color < colors.length) return colors[color];
   return colors[0];
+};
+
+export const animationDefaultOptions = {
+  loop: true,
+  autoplay: true,
+  animationData,
 };
