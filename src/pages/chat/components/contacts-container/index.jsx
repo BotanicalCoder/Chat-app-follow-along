@@ -1,3 +1,4 @@
+import NewDM from "./components/new-dm";
 import ProfileInfo from "./components/profile-info";
 
 function ContactsContainer() {
@@ -10,6 +11,7 @@ function ContactsContainer() {
       <div className="my5">
         <div className="flex items-center justify-between pr-10">
           <Title text="Direct Messages" />
+          <NewDM />
         </div>
       </div>
 
