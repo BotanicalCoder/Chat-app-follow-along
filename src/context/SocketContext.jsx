@@ -30,8 +30,6 @@ export const SocketProvider = ({ children }) => {
       const handleReceiveMessage = (message) => {
         const {selectedChatData, selectedChatType, addMessage } = useAppStore.getState();
 
-        console.log(message, 'message')
-
         if (selectedChatType !== undefined && (selectedChatData._id === message.sender._id ||  selectedChatData._id === message.recipient._id)) {
           addMessage(message)
         }
