@@ -2,14 +2,17 @@ import { apiClient } from "@/lib/api-client";
 import { useAppStore } from "@/store";
 import { GET_ALL_MESSAGES_ROUTE, HOST } from "@/utils/constants";
 import moment from "moment";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {MdFolderZip} from 'react-icons/md';
 import {IoMdArrowDown} from 'react-icons/io';
+import { IoCloseSharp } from "react-icons/io5";
 
 function MessageContainer() {
   const scrollRef = useRef();
   const { selectedChatType, selectedChatData, userInfo, selectedChatMessages, setSelectedChatMessages} = useAppStore();
 
+  const [showImage, setShowImage] = useState(false);
+  const [imageURL, setImageURL] = useState(null);
 
   useEffect(() => {
 
@@ -53,24 +56,23 @@ function MessageContainer() {
   }
 
   const downloadFile = async (fileURL)=>{
-try {
-  const response = await apiClient.get(`${HOST}/${fileURL}`, {responseType:'blob'});
-  const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
-  const link = document.createElement('a');
-  link.href = urlBlob;
-  link.setAttribute('download', fileURL.split('/').pop());
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(urlBlob);
-} catch (error) {
-  return error;
-}
+    try {
+      const response = await apiClient.get(`${HOST}/${fileURL}`, {responseType:'blob'});
+      const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = urlBlob;
+      link.setAttribute('download', fileURL.split('/').pop());
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (error) {
+      return error;
+    }
   }
 
   const renderDMMessages = (message) => {
-
-const sender = message.sender._id || message.sender
+    const sender = message.sender._id || message.sender
     return <div
     className={`${ sender !== selectedChatData._id ? "text-left" : "text-right"}
      `}
@@ -83,27 +85,34 @@ const sender = message.sender._id || message.sender
           {message.content}
         </div>}
 
-{message.messageType==='file' && <div
+      {message.messageType==='file' && <div
         className={`
           ${ sender !== selectedChatData._id ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50 " : "bg-[#2a2b33]/5 text-white/80 border-white/20"}
           border inline-block p-4 rounded my-1 max-w-[50%] break-words`}
         >
-         {checkIfImage(message.fileUrl)?<div className="cursor-pointer">
-          <img src={`${HOST}/${message.fileUrl}`} alt="file" height={300} width={300} className="object-cover" />
-         </div>: <div
-         className="flex items-center justify-center gap-4"
+         {checkIfImage(message.fileUrl)?<div className="cursor-pointer"
+         onClick={()=>{
+          setImageURL(message.fileUrl); 
+          setShowImage(true);
+        }}
          >
-          <span className="text-white/8 text-3xl bg-black/20 rounded-full p-3">
-          <MdFolderZip className="w-6 h-6" />
-          </span>
-          <span>
-            {message.fileUrl.split('/').pop()}
-          </span>
-          <span className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300  " 
-          onClick={() => downloadFile(message.fileUrl)}
+          <img src={`${HOST}/${message.fileUrl}`} alt="file" height={300} width={300} className="object-cover" />
+          </div>: 
+          
+          <div
+          className="flex items-center justify-center gap-4"
           >
-            <IoMdArrowDown className="w-6 h-6" />
-          </span>
+            <span className="text-white/8 text-3xl bg-black/20 rounded-full p-3">
+            <MdFolderZip className="w-6 h-6" />
+            </span>
+            <span>
+              {message.fileUrl.split('/').pop()}
+            </span>
+            <span className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300  " 
+            onClick={() => downloadFile(message.fileUrl)}
+            >
+              <IoMdArrowDown className="w-6 h-6" />
+            </span>
           </div>} 
           </div> }
 
@@ -137,6 +146,34 @@ const sender = message.sender._id || message.sender
       {renderMessages()}
 
       <div ref={scrollRef} />
+
+      {
+        showImage && <div
+        className="fixed z-[1000] top-0 left-0 h-[100vh] w-[100vw] flex items-center justify-center backdrop-blur-lg flex-col"
+        > 
+          <div>
+            <img src={`${HOST}/${imageURL}`} alt="image" className="w-full h-[80vh] bg-cover" />
+          </div>
+
+          <div className="flex gap-5 fixed top-0 mt-5" >
+          <button className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300  " 
+            onClick={() => downloadFile(`${HOST}/${imageURL}`)}
+            >
+              <IoMdArrowDown className="w-6 h-6" />
+            </button>
+
+            <button className="bg-black/20 p-3 text-2xl rounded-full hover:bg-black/50 cursor-pointer transition-all duration-300  " 
+            onClick={() =>{ 
+              setShowImage(false);
+
+              setImageURL(null);
+            }}
+            >
+              <IoCloseSharp className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+      }
     </div>
   );
 }
